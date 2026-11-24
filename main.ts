@@ -11,6 +11,9 @@ function main() {
   if (LINE.trim() !== LINE) {
     throw new Error("line must not start or end with whitespace");
   }
+  if (/[\n\r\t]/.test(LINE) || [...LINE].some((c) => c.charCodeAt(0) < 32)) {
+    throw new Error("line must be a single line with no control characters");
+  }
   const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
   mkdirSync(outDir, { recursive: true });
   const path = join(outDir, "entry.txt");
@@ -19,7 +22,11 @@ function main() {
   if (back !== LINE) {
     throw new Error("round-trip check failed: file does not match the line");
   }
-  console.log(`wrote ${LINE.length} characters to ${path}`);
+  const bytes = Buffer.byteLength(LINE, "utf8");
+  if (Buffer.byteLength(back, "utf8") !== bytes) {
+    throw new Error("byte-length check failed");
+  }
+  console.log(`wrote ${LINE.length} characters (${bytes} bytes) to ${path}`);
   console.log(LINE);
 }
 
